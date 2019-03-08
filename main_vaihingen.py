@@ -19,8 +19,14 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 model_path = 'models/vaihingen/'
-do_plot = False
-do_train = True
+
+# original config to train
+# do_plot = False
+# do_train = True
+# start_test = 100
+
+do_plot = True
+do_train = False
 start_test = 100
 
 
@@ -235,13 +241,6 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_place
             iou_writer.writerow([n,iou_train,iou_test])
             iou_csvfile.close()
             polygons_csvfile.close()
-
-
-
-#if os.path.isfile(model_path+'iuo_train_test.csv'):
-
-#else:
-
 
 
 
