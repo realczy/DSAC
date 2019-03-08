@@ -3,7 +3,7 @@ import scipy.misc
 import numpy as np
 import csv
 import os
-import matplotlib.pyplot as plt
+
 from active_contours_fast import draw_poly,derivatives_poly,draw_poly_fill
 from snake_utils import imrotate, plot_snakes, CNN_B, snake_graph, plot_for_figure
 from scipy import interpolate
@@ -14,14 +14,14 @@ import math
 from PIL import Image, ImageOps
 from tensorflow.python.client import timeline
 
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 model_path = 'models/vaihingen/'
 do_plot = False
 do_train = True
 start_test = 100
-
-
 
 
 def snake_process (mapE, mapA, mapB, mapK, init_snake):
@@ -56,7 +56,7 @@ batch_size = 1
 numfilt = [32,64,128,128,256,256]
 im_size = 512
 out_size = 256
-data_path = '/mnt/bighd/Data/Vaihingen/buildings/'
+data_path = '/Users/czy/Dataset/Vaihingen buildings/'
 csvfile=open(data_path+'polygons.csv', newline='')
 reader = csv.reader(csvfile)
 images = np.zeros([im_size,im_size,3,168])
@@ -235,11 +235,6 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_place
             iou_writer.writerow([n,iou_train,iou_test])
             iou_csvfile.close()
             polygons_csvfile.close()
-
-
-
-
-
 
 
 

@@ -1,5 +1,7 @@
 from PIL import Image, ImageOps
 import math
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import scipy.misc
 import numpy as np
