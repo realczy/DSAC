@@ -3,20 +3,24 @@ import scipy.misc
 import numpy as np
 import csv
 import os
-from active_contour_maps_GD_fast import draw_poly,derivatives_poly,draw_poly_fill
+from active_contours_fast import draw_poly, derivatives_poly, draw_poly_fill
 from snake_utils import imrotate, plot_snakes, CNN_B, snake_graph
 from scipy import interpolate
 from skimage.filters import gaussian
 import scipy
 import time
+
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 model_path = 'models/bing/'
+
 do_plot = False
 do_train = True
 
 
-def snake_process (mapE, mapA, mapB, mapK, init_snake):
+def snake_process(mapE, mapA, mapB, mapK, init_snake):
 
     for i in range(mapE.shape[3]):
         Du = np.gradient(mapE[:,:,0,i], axis=0)
