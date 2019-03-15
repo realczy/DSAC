@@ -2,6 +2,8 @@ import shapefile
 import numpy as np
 import math
 import csv
+import os
+import shutil
 
 patch_size = 128
 offset_tolerance = 20
@@ -14,10 +16,12 @@ right = 1573851.1
 up = 5186889.225
 down = 5175399.225
 
-vertex_num_max = 60
+vertex_num_max = 25
 
-res_x = (right - left) / cols
+# TODO: find out the exact ratio
+# res_x = (right - left) / cols
 res_y = (up - down) / rows
+res_x = res_y
 
 
 def filter_buildings(input_shapefile_path="/Users/czy/Dataset/WHU Building Dataset/data/shapefile/train_area/train.shp"):
@@ -44,8 +48,9 @@ def filter_buildings(input_shapefile_path="/Users/czy/Dataset/WHU Building Datas
         # a flag to verify if all vertexes belong to the same patch
         IS_SAME_PATCH = True
 
-        index_x0 = math.floor((p[0][0] - left) / res_x / patch_size)
-        index_y0 = math.floor((p[0][1] - down) / res_x / patch_size)
+        # TODO: check this
+        index_x0 = math.floor((np.average(p, axis=0)[0] - left) / res_x / patch_size)
+        index_y0 = math.floor((np.average(p, axis=0)[1] - down) / res_x / patch_size)
 
         # loop over the vertexes to update the flag or not
         for v in range(len(p)):
@@ -67,10 +72,14 @@ def filter_buildings(input_shapefile_path="/Users/czy/Dataset/WHU Building Datas
             w.poly(parts=[joints])
             w.record('')
 
-    w.save("/Users/czy/Desktop/new.shp")
+    w.save("/Users/czy/Desktop/filtered.shp")
 
 
-def create_annotations(input_shapefile_path="/Users/czy/Desktop/new.shp"):
+def extract_one_building():
+    pass
+
+
+def create_annotations(input_shapefile_path="/Users/czy/Desktop/filtered.shp"):
     """
 
     :param input_shapefile_path: path to filtered shapefile
@@ -87,6 +96,11 @@ def create_annotations(input_shapefile_path="/Users/czy/Desktop/new.shp"):
         p = s.points
         n_points = len(p) - 1
 
+        # polygon center
+        center = np.average(p, axis=0)
+        n_tile = math.floor((center[0] - left) / res_x / patch_size) \
+                 + math.floor((center[1] - down) / res_y / patch_size) * math.ceil(cols / patch_size)
+
         # the 1st number in each row represents the vertex quantity
         # supplement zeros afterwords
         coordinates = []
@@ -100,18 +114,44 @@ def create_annotations(input_shapefile_path="/Users/czy/Desktop/new.shp"):
             y = p[j][1]
 
             # coordinates relative to the whole area
-            [pixel_x_ori, pixel_y_ori] = [round((x - left) / res_x), round((y - down) / res_y)]
-            [pixel_x, pixel_y] = [pixel_x_ori, rows - pixel_y_ori]
+            [pixel_x, pixel_y] = [round((x - left) / res_x), round((up - y) / res_y)]
 
-            coordinates.append(pixel_x)
-            coordinates.append(pixel_y)
+            # patch index (start from 0)
+            index_x = math.floor(pixel_x / patch_size)
+            index_y = math.floor(pixel_y / patch_size)
+
+            local_x = pixel_x - index_x * patch_size
+            local_y = pixel_y - index_y * patch_size
+
+            coordinates.append(local_y)
+            coordinates.append(local_x)
 
         # write csv files
         file = open("/Users/czy/Desktop/polygons.csv", 'a', newline='')
         csvwriter = csv.writer(file)
-        csvwriter.writerow([n_points] + coordinates + zeros)
+        csvwriter.writerow([n_tile] + [n_points] + coordinates + zeros)
+        # csvwriter.writerow([n_points] + [n_tile])
         file.close()
 
 
+def copy_files(index_path='/Users/czy/Dataset/DSAC/polygons/scheme2/polygons_index.csv', file_type="image"):
+
+    if file_type == "mask":
+        src_dir = "/Users/czy/Dataset/DSAC/_masks/masks/"
+        dst_dir = "/Users/czy/Dataset/DSAC/masks/"
+    elif file_type == "image":
+        src_dir = "/Users/czy/Dataset/DSAC/_images/images/"
+        dst_dir = "/Users/czy/Dataset/DSAC/images/"
+
+    with open(index_path, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        indexes = [row[0] for row in reader]
+        filenames = ["building_" + str(indexes[i]) + ".TIF" for i in range(len(indexes))]
+        for filename in filenames:
+            shutil.copyfile(src_dir + filename, dst_dir + filename)
+
+
 if __name__ == '__main__':
-    create_annotations()
+    # create_annotations()
+    # filter_buildings()
+    copy_files()
